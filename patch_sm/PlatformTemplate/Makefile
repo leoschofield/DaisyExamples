@@ -2,7 +2,7 @@
 TARGET = PlatformTemplate
 
 # Sources
-CPP_SOURCES = PlatformMain.cpp
+CPP_SOURCES = PlatformMain.cpp Param.cpp
 
 # Library Locations
 LIBDAISY_DIR = ../../libDaisy/

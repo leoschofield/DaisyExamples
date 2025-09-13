@@ -131,3 +131,11 @@ MyProjects/
 .cortex-debug.registers.state.json
 .cortex-debug.peripherals.state.json
 
+patch_sm/NeuralOscillator/.vscode/c_cpp_properties.json
+patch_sm/NeuralOscillator/.vscode/launch.json
+patch_sm/NeuralOscillator/.vscode/STM32H750x.svd
+patch_sm/NeuralOscillator/.vscode/tasks.json
+patch_sm/NeuralOscillator/Makefile
+patch_sm/NeuralOscillator/README.md
+patch_sm/NeuralOscillator/SimpleOscillator.cpp
+patch_sm/Ryushi-Granular-Synthesizer/
