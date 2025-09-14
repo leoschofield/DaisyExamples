@@ -1,9 +1,8 @@
 #include "Param.h"
 
-Param::Param() : m_cvID(0), m_paramID(0), m_value(0.0f) {}
+Param::Param() : m_paramID(0), m_value(0.0f) {}
 
-void Param::setup(int cvID, int paramID) {
-    m_cvID = cvID;
+void Param::setup(int paramID) {
     m_paramID = paramID;
 }
 
@@ -11,6 +10,6 @@ void Param::setValue(float value) {
     m_value = value;
 }
 
-float Param::getValue() const {
+float Param::getValue() {
     return m_value;
 }
