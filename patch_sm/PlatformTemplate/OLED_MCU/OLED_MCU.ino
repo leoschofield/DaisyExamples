@@ -92,18 +92,18 @@ enum ParamMask
 
 const char* parameter_name_strings[NUM_PARAMS] =
 {
-  " Parameter 1    ",
-  " Parameter 2    ",
-  " Parameter 3    ",
-  " Parameter 4    ",
-  " Parameter 5    ",
-  " Parameter 6    ",
-  " Parameter 7    ",
-  " Parameter 8    ",
-  " Parameter 9    ",
-  " Parameter 10   ",
-  " Parameter 11   ",
-  " Parameter 12   "
+  " Parameter 1   ",
+  " Parameter 2   ",
+  " Parameter 3   ",
+  " Parameter 4   ",
+  " Parameter 5   ",
+  " Parameter 6   ",
+  " Parameter 7   ",
+  " Parameter 8   ",
+  " Parameter 9   ",
+  " Parameter 10  ",
+  " Parameter 11  ",
+  " Parameter 12  "
 };
 
 const int parameter_min_max_default[NUM_PARAMS][3] =
@@ -112,7 +112,7 @@ const int parameter_min_max_default[NUM_PARAMS][3] =
   {0,2,1},  //2
   {0,3,10},  //3
   {0,4,100},  //4
-  {0,5,55},  //5
+  {0,100,55},  //5
   {0,6,66},  //6 
   {0,7,77},  //7
   {0,8,88},  //8
@@ -161,8 +161,11 @@ class Parameter
     m_current_val = default_val;
    }
 
-   void update(int new_val)
+   void update_param(int enc_delta)
    {    
+    int new_val = 0;
+    new_val = m_current_val + enc_delta;
+
     if (new_val < m_min_val) 
       new_val = m_min_val;
     else if (new_val > m_max_val) 
@@ -180,6 +183,7 @@ class Parameter
    {
     return m_current_val;
    }
+
   private:
     int m_current_val;
     int m_default_val;
@@ -219,16 +223,16 @@ class Page
     }
    }
 
-   void update (int enc_delta)
+   void update (int enc_delta, bool edit_param)
    {
       display.setTextSize(1);
       display.setCursor(0, 0);
       display.clearDisplay();
       display.setTextColor(SH110X_WHITE);
       display.print(page_headers[m_page_ID]);
-      
-      m_selected_param += enc_delta;
 
+      if(edit_param ){parameters[m_selected_param].update_param(enc_delta); }
+      else { m_selected_param += enc_delta; }
       // sanitise input
       if(m_selected_param >= m_num_params) { m_selected_param = 0; }
       else if(m_selected_param < 0) { m_selected_param = m_num_params - 1; }
@@ -236,21 +240,30 @@ class Page
 
       int start_param = 0;
       int end_param = 0;
+      //logic to deal with multiple sections, new sections start at parameter 8 etc (index 7)
       if (m_selected_param > 6) { start_param = 7; }
- 
+      //logic to set the end paramter index in a section
       if( (start_param + 7) > m_num_params) { end_param = m_num_params; }
       else { end_param = start_param + 7; }
-
+      // draw the params in each section to screen
       for (int i = start_param ; i < end_param; i++)   
       {
         if (i == m_selected_param) {display.setTextColor(SH110X_BLACK, SH110X_WHITE);}
         else                       {display.setTextColor(SH110X_WHITE);}
         display.print(parameter_name_strings[parameters[i].getID()]);
+
+        if ((edit_param)&&(i == m_selected_param)) { display.print(">"); }
+        else                           { display.print(" "); }
+
         int val = parameters[i].getVal();
         display.print(val);
-        if(val<10)        { display.print("    "); }
-        else if(val<100)  { display.print("   ");  }
-        else if(val<1000) { display.print("  ");   }
+
+        if ((edit_param)&&(i == m_selected_param)) { display.print("<"); }
+        else                           { display.print(" "); }
+
+        if(val<10)        { display.print("   "); }
+        else if(val<100)  { display.print("  ");  }
+        else if(val<1000) { display.print(" ");   }
       }
       display.display();
     }
@@ -301,11 +314,11 @@ class Menu
       display.display();
     }
 
-    void updatePage(int enc_delta)
+    void updatePage(int enc_delta, bool edit_param)
     {
-      pages[m_selected_page].update(enc_delta);
+      pages[m_selected_page].update(enc_delta, edit_param);
     }
-    
+
     void reset()
     {
       m_selected_page = 0;
@@ -335,9 +348,10 @@ class DisplayState
           m_menu.update(enc_delta);
           break;
         case PAGE:
-          m_menu.updatePage(enc_delta);
+          m_menu.updatePage(enc_delta,false);
           break;
         case EDIT:
+          m_menu.updatePage(enc_delta,true);
           break;
         default:
           display.clearDisplay();
