@@ -37,16 +37,24 @@ enum PageID
   ALGORITHM = 0,
   MIDI_SYNC = 1,
   SCREEN = 2,
-  MISC = 3,
+  GENERAL = 3,
   NUM_PAGES = 4
 };
 
 const char* page_name_strings[NUM_PAGES] =
 {
-  "Algorithm Settings   ",
-  "MIDI / Sync Settings ",
-  "Display Settings     ",
-  "Misc Settings        ",
+  " Algorithm Settings  ",
+  " MIDI/Sync Settings  ",
+  " Display Settings    ",
+  " General Settings    ",
+};
+
+const char* page_headers[NUM_PAGES] =
+{
+  "~~~~~~Algorithm~~~~~~",
+  "~~~~~~MIDI/Sync~~~~~~",
+  "~~~~~~~Display~~~~~~~",
+  "~~~~~~~General~~~~~~~",
 };
 
 enum ParameterID
@@ -84,18 +92,18 @@ enum ParamMask
 
 const char* parameter_name_strings[NUM_PARAMS] =
 {
-  " Parameter 1   |",
-  " Parameter 2   |",
-  " Parameter 3   |",
-  " Parameter 4   |",
-  " Parameter 5   |",
-  " Parameter 6   |",
-  " Parameter 7   |",
-  " Parameter 8   |",
-  " Parameter 9   |",
-  " Parameter 10  |",
-  " Parameter 11  |",
-  " Parameter 12  |"
+  " Parameter 1    ",
+  " Parameter 2    ",
+  " Parameter 3    ",
+  " Parameter 4    ",
+  " Parameter 5    ",
+  " Parameter 6    ",
+  " Parameter 7    ",
+  " Parameter 8    ",
+  " Parameter 9    ",
+  " Parameter 10   ",
+  " Parameter 11   ",
+  " Parameter 12   "
 };
 
 const int parameter_min_max_default[NUM_PARAMS][3] =
@@ -213,14 +221,27 @@ class Page
 
    void update (int enc_delta)
    {
-      m_selected_param += enc_delta;
-      if(m_selected_param >= m_num_params) { m_selected_param = 0; }
-      else if(m_selected_param < 0) { m_selected_param = m_num_params - 1; }
-
       display.setTextSize(1);
       display.setCursor(0, 0);
       display.clearDisplay();
-      for (int i = 0 ; i < m_num_params; i++)   
+      display.setTextColor(SH110X_WHITE);
+      display.print(page_headers[m_page_ID]);
+      
+      m_selected_param += enc_delta;
+
+      // sanitise input
+      if(m_selected_param >= m_num_params) { m_selected_param = 0; }
+      else if(m_selected_param < 0) { m_selected_param = m_num_params - 1; }
+            Serial.println(m_selected_param);
+
+      int start_param = 0;
+      int end_param = 0;
+      if (m_selected_param > 6) { start_param = 7; }
+ 
+      if( (start_param + 7) > m_num_params) { end_param = m_num_params; }
+      else { end_param = start_param + 7; }
+
+      for (int i = start_param ; i < end_param; i++)   
       {
         if (i == m_selected_param) {display.setTextColor(SH110X_BLACK, SH110X_WHITE);}
         else                       {display.setTextColor(SH110X_WHITE);}
@@ -254,10 +275,10 @@ class Menu
     Menu()
     {
       m_selected_page = 0;
-      pages[ALGORITHM].initialise(ALGORITHM, 3, (0 | PARAM1_MASK | PARAM2_MASK | PARAM4_MASK) );
-      pages[MIDI_SYNC].initialise(MIDI_SYNC, 2, (0 | PARAM5_MASK | PARAM3_MASK));
-      pages[SCREEN].initialise(SCREEN, 5);
-      pages[MISC].initialise(MISC, 2);
+      pages[ALGORITHM].initialise(ALGORITHM, 10, (0 | PARAM1_MASK | PARAM2_MASK | PARAM3_MASK | PARAM4_MASK | PARAM5_MASK  | PARAM6_MASK  | PARAM7_MASK  | PARAM8_MASK | PARAM9_MASK  | PARAM10_MASK) );
+      pages[MIDI_SYNC].initialise(MIDI_SYNC, 2, (0 | PARAM5_MASK | PARAM3_MASK) );
+      pages[SCREEN].initialise(SCREEN, 0);
+      pages[GENERAL].initialise(GENERAL, 0);
     }
 
     void update(int enc_delta)
