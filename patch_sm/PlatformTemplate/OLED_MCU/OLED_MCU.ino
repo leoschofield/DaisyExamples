@@ -439,7 +439,7 @@ class StateMachine {
 //########################################################################################################################
 
 #define ENC_BTN_PIN 34
-#define BACK_BTN_PIN 0 
+#define BACK_BTN_PIN 5 
 #define ENC_PIN_A 25
 #define ENC_PIN_B 26
 
@@ -454,6 +454,7 @@ StateMachine stateMachine;
 void setup()   {
   Serial.begin(9600);
   pinMode(ENC_BTN_PIN, INPUT);
+  pinMode(BACK_BTN_PIN, INPUT);
   pinMode(ENC_PIN_A, INPUT); 
   pinMode(ENC_PIN_B, INPUT);
   attachInterrupt(digitalPinToInterrupt(ENC_PIN_A), updateEncoder, RISING);
@@ -476,7 +477,11 @@ void loop() {
 Events handleHardwareEvent ()
 {
   Events event;
-  event = checkButtons();
+  event = checkBackButton();
+  if (event != NO_EVENT){ 
+    return event; // buttons take priority
+  }
+  event = checkEncButton();
   if (event != NO_EVENT){ 
     return event; // buttons take priority
   }
@@ -488,7 +493,7 @@ Events handleHardwareEvent ()
   return event;
 }
 
-Events checkButtons()
+Events checkEncButton()
 {
   static unsigned long btn_timer = 0;
   static bool btn_ready = 1;
@@ -517,6 +522,40 @@ Events checkButtons()
       btn_timer = 0;
       btn_ready = 1;
       return ENC_BTN; // only send event when button released + btn_off_length
+    }
+  }
+  return NO_EVENT;
+}
+
+Events checkBackButton()
+{
+  static unsigned long btn_timer = 0;
+  static bool btn_ready = 1;
+  unsigned long btn_hold_length = 30UL;
+  unsigned long btn_off_length = 20UL;
+  if ((digitalRead(BACK_BTN_PIN) == 0) && (btn_ready==1))
+  {
+    if(btn_timer == 0)
+    {
+      btn_timer = millis();
+    }
+    if( millis() - btn_timer > btn_hold_length)
+    {    
+      btn_timer = 0;
+      btn_ready = 0;
+    }
+  }
+  else if ((digitalRead(BACK_BTN_PIN) == 1) && (btn_ready==0))
+  {
+    if(btn_timer == 0)
+    {
+      btn_timer = millis();
+    }
+    if((millis() - btn_timer) > btn_off_length)
+    {
+      btn_timer = 0;
+      btn_ready = 1;
+      return BACK_BTN; // only send event when button released + btn_off_length
     }
   }
   return NO_EVENT;
