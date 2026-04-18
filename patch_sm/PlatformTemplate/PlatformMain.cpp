@@ -17,6 +17,22 @@ DaisyPatchSM patch;
 Switch button;
 Switch encoderButton;
 Param parameters[8];
+UartHandler uart;
+
+// rx / tx buffers
+uint8_t DMA_BUFFER_MEM_SECTION rx_buff[4];
+uint8_t DMA_BUFFER_MEM_SECTION tx_buff[10];
+
+void RestartUartTx(void* state, UartHandler::Result res);
+
+void RestartUartRx(void* state, UartHandler::Result res){
+}
+
+void RestartUartTx(void* state, UartHandler::Result res)
+{
+    uart.DmaReceive(rx_buff, 4, NULL, RestartUartRx, NULL);
+    uart.DmaTransmit(tx_buff, 10, NULL, RestartUartTx, NULL);
+}
 
 
 
@@ -53,12 +69,10 @@ void AudioCallback(AudioHandle::InputBuffer  in,
         if (parameters[i].getValue() != readVal)
         {
             parameters[i].setValue(readVal);
-            if (i == 0)
-                patch.WriteCvOut(2,5.0*readVal);
         }
     }
 
-
+    // Process Audio
     for(size_t i = 0; i < size; i++)
     {
         out[0][i] = in[0][i]; /**< Copy the left input to the left output */
@@ -70,7 +84,29 @@ int main(void)
 {
     /** Initialize the hardware */
     patch.Init();
-    patch.StartLog();
+    // patch.StartLog();
+
+    // reset our dma buffers
+    for(int i = 0; i < 10; i++)
+    {
+        tx_buff[i] = 0x31;
+    }
+        patch.WriteCvOut(2,5.0);
+
+    // set up our UART peripheral
+    UartHandler::Config uart_conf;
+        uart_conf.baudrate = 9600;
+
+    uart_conf.periph        = UartHandler::Config::Peripheral::USART_3;
+    uart_conf.mode          = UartHandler::Config::Mode::TX_RX;
+    uart_conf.pin_config.tx = DaisyPatchSM::D3;
+    uart_conf.pin_config.rx = DaisyPatchSM::D2;
+
+    // initialize the UART peripheral, and start reading
+    uart.Init(uart_conf);
+
+    uart.DmaReceive(rx_buff, 4, NULL, NULL, NULL);
+    uart.DmaTransmit(tx_buff, 10, NULL, RestartUartTx, NULL);
 
     parameters[0].setup(paramID::PARAM_1);
     parameters[1].setup(paramID::PARAM_2);
@@ -81,12 +117,16 @@ int main(void)
     parameters[6].setup(paramID::PARAM_7);
     parameters[7].setup(paramID::PARAM_8);
 
-    /** Start Processing the audio */
     patch.StartAudio(AudioCallback);
-        // patch.PrintLine("hellooooo");
-        patch.WriteCvOut(2,5.0);
+
     while(1) {
-        // System::Delay(1000); // Wait 1 second between printing
+        patch.WriteCvOut(2,0.0);
+        System::Delay(100);
+        patch.WriteCvOut(2,5.0);
+        // patch.PrintLine("hellooooo");
+        uart.DmaTransmit(tx_buff, 10, NULL, RestartUartTx, NULL);
+
+        System::Delay(100);
     }
 
 }
